@@ -1,258 +1,195 @@
 ﻿#include <iostream>
 #include <iomanip>
-#include <utility>
-
-using namespace std;
+#include <cmath>
+#include <variant>
+#include <algorithm>
 
 class Vector3D {
-	double X;
-	double Y;
-	double Z;
+    double X;
+    double Y;
+    double Z;
 
-public: 
+public:
+    Vector3D(double x = 0.0, double y = 0.0, double z = 0.0) : X(x), Y(y), Z(z) {}
 
-	Vector3D() {
-		X = 0;
-		Y = 0;
-		Z = 0;
-	}
+    double GetX() const { return X; }
+    double GetY() const { return Y; }
+    double GetZ() const { return Z; }
 
-	Vector3D(double x, double y, double z) {
-		X = x;
-		Y = y;
-		Z = z;
-	}
+    friend std::istream& operator>>(std::istream& in, Vector3D& obj) {
+        in >> obj.X >> obj.Y >> obj.Z;
+        return in;
+    }
 
-	// Copy constructor
-	Vector3D(const Vector3D& other) : X(other.X), Y(other.Y), Z(other.Z) {}
+    friend std::ostream& operator<<(std::ostream& out, const Vector3D& obj) {
+        out << std::fixed << std::setprecision(3) << obj.X << " " << obj.Y << " " << obj.Z;
+        return out;
+    }
 
-	// Copy assignment
-	Vector3D& operator=(const Vector3D& other) {
-		if (this != &other) {
-			X = other.X;
-			Y = other.Y;
-			Z = other.Z;
-		}
-		return *this;
-	}
+    Vector3D operator+(const Vector3D& other) const {
+        return Vector3D(X + other.X, Y + other.Y, Z + other.Z);
+    }
 
-	// Move constructor
-	Vector3D(Vector3D&& other) noexcept : X(other.X), Y(other.Y), Z(other.Z) {
-		other.X = other.Y = other.Z = 0;
-	}
+    Vector3D operator-(const Vector3D& other) const {
+        return Vector3D(X - other.X, Y - other.Y, Z - other.Z);
+    }
 
-	// Move assignment
-	Vector3D& operator=(Vector3D&& other) noexcept {
-		if (this != &other) {
-			X = other.X;
-			Y = other.Y;
-			Z = other.Z;
-			other.X = other.Y = other.Z = 0;
-		}
-		return *this;
-	}
+    Vector3D operator*(double scalar) const {
+        return Vector3D(X * scalar, Y * scalar, Z * scalar);
+    }
 
-	// Overloading operators for Vector3D
+    // Скалярное произведение
+    double operator*(const Vector3D& other) const {
+        return X * other.X + Y * other.Y + Z * other.Z;
+    }
 
-	friend istream& operator>>(istream& in, Vector3D& obj) {
-		cin >> obj.X >> obj.Y >> obj.Z;
-		return in;
-	}
+    // Векторное произведение
+    Vector3D Cross(const Vector3D& other) const {
+        return Vector3D(
+            Y * other.Z - Z * other.Y,
+            Z * other.X - X * other.Z,
+            X * other.Y - Y * other.X
+        );
+    }
 
-	friend ostream& operator<<(ostream& out, const Vector3D& obj) {
-		out << fixed << setprecision(3) << obj.X << " " << obj.Y << " " << obj.Z;
-		return out;
-	}
+    // Квадрат длины используется для оптимизации вычислений
+    double SquaredLength() const {
+        return X * X + Y * Y + Z * Z;
+    }
 
-	Vector3D operator+(const Vector3D& other) {
-		return Vector3D(X + other.X, Y + other.Y, Z + other.Z);
-	}
+    double Length() const {
+        return std::sqrt(SquaredLength());
+    }
 
-	Vector3D operator-(const Vector3D& other) {
-		return Vector3D(X - other.X, Y - other.Y, Z - other.Z);
-	}
-
-	Vector3D operator*(double scalar) {
-		return Vector3D(X * scalar, Y * scalar, Z * scalar);
-	}
-
-	double operator*(const Vector3D& other) {
-		return X * other.X + Y * other.Y + Z * other.Z;
-	}
-
-	Vector3D Cross(const Vector3D& other) {
-		return Vector3D(
-			Y * other.Z - Z * other.Y,
-			Z * other.X - X * other.Z,
-			X * other.Y - Y * other.X
-		);
-	}
-
-	bool operator==(const Vector3D& other) {
-		return X == other.X && Y == other.Y && Z == other.Z;
-	}
-
-	double Length() {
-		return sqrt(X * X + Y * Y + Z * Z);
-	}
+    bool IsEqual(const Vector3D& other, double eps) const {
+        return SquaredLength() <= eps;
+    }
 };
 
 class Segment3D {
-	Vector3D start;
-	Vector3D end;
+    Vector3D start;
+    Vector3D end;
 
 public:
-	Segment3D() {
-		start = Vector3D();
-		end = Vector3D();
-	}
-	Segment3D(const Vector3D& s, const Vector3D& e) {
-		start = s;
-		end = e;
-	}
+    Segment3D() = default;
+    Segment3D(const Vector3D& s, const Vector3D& e) : start(s), end(e) {}
 
-	// Copy constructor
-	Segment3D(const Segment3D& other) : start(other.start), end(other.end) {}
+    const Vector3D& GetStart() const { return start; }
+    const Vector3D& GetEnd() const { return end; }
 
-	// Copy assignment
-	Segment3D& operator=(const Segment3D& other) {
-		if (this != &other) {
-			start = other.start;
-			end = other.end;
-		}
-		return *this;
-	}
-
-	// Move constructor
-	Segment3D(Segment3D&& other) noexcept : start(std::move(other.start)), end(std::move(other.end)) {}
-
-	// Move assignment
-	Segment3D& operator=(Segment3D&& other) noexcept {
-		if (this != &other) {
-			start = std::move(other.start);
-			end = std::move(other.end);
-		}
-		return *this;
-	}
-
-	Vector3D getStart() {
-		return start;
-	}
-
-	Vector3D getEnd() {
-		return end;
-	}
-
-	void enterSegment() {
-		//cout << "Enter start point (x y z): ";
-		cin >> start;
-		//cout << "Enter end point (x y z): ";
-		cin >> end;
-	}
-
+    Vector3D GetDirection() const { return end - start; }
+    double SquaredLength() const { return GetDirection().SquaredLength(); }
 };
 
-// Method to read a segment from user input
-Segment3D readSegment() {
-	Segment3D segment;
-	segment.enterSegment();
-	return segment;
+Segment3D ReadSegment() {
+    Vector3D start, end;
+    std::cin >> start >> end;
+    return Segment3D(start, end);
 }
 
-// Function to find the intersection of two segments in 3D space
-void Intersect(Segment3D A, Segment3D B, double eps=1e-10) {
+std::variant<std::monostate, Vector3D, Segment3D> Intersect(const Segment3D& A, const Segment3D& B, double eps = 1e-9) {
+    Vector3D dirA = A.GetDirection();
+    Vector3D dirB = B.GetDirection();
+    Vector3D AB = A.GetStart() - B.GetStart();
 
-	Vector3D directionA = A.getEnd() - A.getStart();
-	Vector3D Astart = A.getStart();
-	Vector3D directionB = B.getEnd() - B.getStart();
-	Vector3D Bstart = B.getStart();
-	Vector3D AB = Astart - Bstart;
+    double a = dirA.SquaredLength();
+    double c = dirB.SquaredLength();
 
+    // Защита от вырожденных отрезков (длина равна нулю)
+    if (a <= eps * eps || c <= eps * eps) {
+        if (a <= eps * eps && c <= eps * eps && (A.GetStart() - B.GetStart()).SquaredLength() <= eps * eps) {
+            return A.GetStart();
+        }
+        return std::monostate{};
+    }
 
-	// Coefficients for the system of equations
-	double a = directionA * directionA;
-	double b = directionA * directionB;
-	double c = directionB * directionB;
-	double d = directionA * AB;
-	double e = directionB * AB;
-	// Determinant of the system
-	double denominator = a * c - b * b;
+    double b = dirA * dirB;
+    double d = dirA * AB;
+    double e = dirB * AB;
 
-	// Check if lines are parallel (denominator close to zero)
-	if (fabs(denominator) <= eps) {
-		double tA = -d / a;
-		Vector3D p_proj = Astart + directionA * tA;
-		Vector3D dist_vec = Bstart - p_proj;
+    double denominator = a * c - b * b;
 
-		// If the distance from the projected point to the start of segment B is greater than eps, they are parallel but not coincident
-		if (dist_vec.Length() > eps) {
-			cout << "Lines are parallel but not coincident.";
-			return;
-		}
-		else
-		{
-			// Lines are collinear, check for overlap
-			double tB = (b - d) / a;
+    // Проверка на параллельность
+    if (denominator * denominator <= eps) {
 
-			double tMin = min(tA, tB);
-			double tMax = max(tA, tB);
+        // Проверка: лежат ли отрезки на одной прямой (расстояние от B до прямой A)
+        Vector3D perp = AB - dirA * (d / a);
+        if (perp.SquaredLength() > eps) {
+            return std::monostate{};
+        }
 
-			double overlapStart = max(0.0, tMin);
-			double overlapEnd = min(1.0, tMax);
+        // Отрезки коллинеарны. Проецируем концы отрезка B на прямую A
+        double tB_start = -d / a;
+        double tB_end = (dirA * (B.GetEnd() - A.GetStart())) / a;
 
-			// Check if there is an overlap
-			if (overlapStart > overlapEnd + eps) {
-				cout << "Segments are on the one line but do not overlap.";
-				return;
-			}
-			else if (fabs(overlapStart - overlapEnd) <= eps) {
-				cout << "Segments are on the one line and touch at point: "
-					<< Astart + directionA * overlapStart;
-				return;
-			}
-			else {
-				cout << "Segments are on the one line and overlap from "
-					<< Astart + directionA * overlapStart << " to "
-					<< Astart + directionA * overlapEnd;
-				return;
-			}
-		}
-	}
+        if (tB_start > tB_end) std::swap(tB_start, tB_end);
 
-	// Calculate the parameters t and s for the closest points on the lines
-	double t = (b * e - c * d) / denominator;
-	double s = (a * e - b * d) / denominator;
+        double overlapStart = std::max(0.0, tB_start);
+        double overlapEnd = std::min(1.0, tB_end);
 
-	// Check if the closest points are within the segments
-	if (t < 0.0 || t > 1.0 || s < 0.0 || s > 1.0) {
-		cout << "Segments do not intersect.";
-		return;
-	}
+        if (overlapStart > overlapEnd + eps) {
+            return std::monostate{};
+        }
 
-	Vector3D intersectionPointA = Astart + directionA * t;
-	Vector3D intersectionPointB = Bstart + directionB * s;
+        if (std::abs(overlapStart - overlapEnd) <= eps) {
+            return A.GetStart() + dirA * overlapStart;
+        }
 
-	// Check if the intersection points are close enough to be considered the same point
-	Vector3D diff = intersectionPointA - intersectionPointB;
+        return Segment3D(
+            A.GetStart() + dirA * overlapStart,
+            A.GetStart() + dirA * overlapEnd
+        );
+    }
 
-	if (diff.Length() > eps) {
-		cout << "Segments do not intersect (with eps = " << fixed << setprecision(3) << eps << ")";
-		return;
-	}
+    // Случай скрещивающихся или пересекающихся прямых
+    double t = (b * e - c * d) / denominator;
+    double s = (a * e - b * d) / denominator;
 
-	// If we reach this point, the segments intersect at a single point
-	cout << "Intersection point: " << (intersectionPointA + intersectionPointB) * 0.5;
+    // Проверка попадания точек в границы отрезков
+    if (t < -eps || t > 1.0 + eps || s < -eps || s > 1.0 + eps) {
+        return std::monostate{};
+    }
+
+    Vector3D pointA = A.GetStart() + dirA * t;
+    Vector3D pointB = B.GetStart() + dirB * s;
+
+    // Проверка кратчайшего расстояния между скрещивающимися прямыми
+    if ((pointA - pointB).SquaredLength() > eps) {
+        return std::monostate{};
+    }
+
+    return (pointA + pointB) * 0.5;
+}
+
+void PrintResult(const std::variant<std::monostate, Vector3D, Segment3D>& result) {
+    struct Visitor {
+        void operator()(std::monostate) const {
+            std::cout << "Segments do not intersect.\n";
+        }
+        void operator()(const Vector3D& p) const {
+            std::cout << "Intersection point: " << p << "\n";
+        }
+        void operator()(const Segment3D& seg) const {
+            std::cout << "Segments overlap from "
+                << seg.GetStart() << " to " << seg.GetEnd() << "\n";
+        }
+    };
+    std::visit(Visitor{}, result);
 }
 
 int main() {
-	
-	Segment3D segmentA = readSegment(), segmentB=readSegment();
+    std::cout << "Enter segment A (start x y z, end x y z):\n";
+    Segment3D segmentA = ReadSegment();
 
-	cout << "Enter epsilon value (default 1e-10): ";
-	double eps;
-	cin >> eps;
+    std::cout << "Enter segment B (start x y z, end x y z):\n";
+    Segment3D segmentB = ReadSegment();
 
-	Intersect(segmentA, segmentB, eps);
+    std::cout << "Enter epsilon value (e.g. 1e-9): ";
+    double eps;
+    std::cin >> eps;
 
-	return 0;
+    std::variant<std::monostate, Vector3D, Segment3D> result = Intersect(segmentA, segmentB, eps);
+    PrintResult(result);
+
+    return 0;
 }
